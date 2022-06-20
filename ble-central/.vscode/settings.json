@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "byteorder.h": "c"
+    },
+    "C_Cpp.errorSquiggles": "Disabled"
+}

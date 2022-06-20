@@ -1,9 +1,10 @@
 #include <ble_uart_service.h>
 
 #define BLE_UART_SERVICE_TX_CHAR_OFFSET    3
+#define BLE_UART_SERVICE_RX_CHAR_OFFSET    1
 
 static ble_uart_service_tx_callback tx_callback = NULL;
-static uint8_t read_info = NULL;
+static uint8_t *read_info = NULL;
 
 static struct bt_uuid_128 ble_uart_svc_uuid = BT_UUID_INIT_128(
 	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
@@ -31,6 +32,16 @@ static ssize_t write_function (struct bt_conn *conn,
     }
 
     return len;
+}
+
+static void on_sent(struct bt_conn *conn, uint8_t err,
+		    struct bt_gatt_write_params *params)
+{
+	struct bt_nus_client *nus_c;
+	const void *data;
+	uint16_t length;
+
+	printk("sent!!!!!");
 }
 
 static ssize_t read_function (struct bt_conn *conn,
@@ -64,9 +75,39 @@ static struct bt_gatt_attr ble_uart_attr_table[] = {
 static struct bt_gatt_service ble_uart_service = BT_GATT_SERVICE(ble_uart_attr_table);
 
 
-int ble_uart_service_register(const ble_uart_service_tx_callback callback) {
-    tx_callback = callback;
+int ble_uart_service_register(/*const ble_uart_service_tx_callback callback*/) {
+    //tx_callback = callback;
 	return 	bt_gatt_service_register(&ble_uart_service);
+}
+
+// funcao chamada quando quiser escrever na conexao
+int ble_service_transmit(const uint8_t *buffer, size_t len, struct bt_conn *conn) {
+
+	printk("len = %zu\n",len);
+	printk("buffer = %p\n",(void*) buffer);
+	if(!buffer || !len) {
+		return -1;
+	}
+
+	printk("transmiting i guess...");
+
+	// create the params
+	struct bt_gatt_write_params w_params = {
+		.func = on_sent,
+		.handle = &ble_uart_attr_table[BLE_UART_SERVICE_TX_CHAR_OFFSET],
+		.offset = 0,
+		.data = &buffer,
+		.length = len
+	};
+
+	int err;
+
+    if(conn) {
+		printk("bt_gatt_writebt_gatt_writebt_gatt_writebt_gatt_writebt_gatt_write...");
+       return (bt_gatt_write(conn, &w_params));
+    } else {
+        return -1;
+    }
 }
 
 // quando recebe a mensagem em maiúsculo, irá printar no terminal

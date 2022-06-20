@@ -11,6 +11,7 @@
 #include <ble_uart_service.h>
 
 static void on_ble_rx_data(const uint8_t *buffer, size_t len) {
+    printk("ola\n");
     ble_uart_service_transmit(buffer, len);
 }
 

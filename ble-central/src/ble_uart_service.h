@@ -18,5 +18,5 @@
 
 typedef void (* ble_uart_service_tx_callback) (const uint8_t *data, size_t length);
 
-int ble_uart_service_register(const ble_uart_service_tx_callback callback);
-int ble_uart_service_transmit(const uint8_t *buffer, size_t len);
+int ble_uart_service_register(/*const ble_uart_service_tx_callback callback*/);
+int ble_service_transmit(const uint8_t *buffer, size_t len, struct bt_conn *conn);

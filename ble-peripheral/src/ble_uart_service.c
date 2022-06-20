@@ -25,6 +25,8 @@ static ssize_t ble_uart_rx_from_host (struct bt_conn *conn,
 	(void)offset;
 	(void)flags;
 
+	printk("recebido!");
+
     if(rx_callback) {
         rx_callback((const uint8_t *)buf,len);
     }
@@ -51,6 +53,7 @@ static struct bt_gatt_service ble_uart_service = BT_GATT_SERVICE(ble_uart_attr_t
 
 
 int ble_uart_service_register(const ble_uart_service_rx_callback callback) {
+    printk("olaaaaa\n");
     rx_callback = callback;
 	return 	bt_gatt_service_register(&ble_uart_service);
 }
@@ -61,12 +64,19 @@ int ble_uart_service_transmit(const uint8_t *buffer, size_t len) {
 		return -1;
 	}
 
+	char *resp = "devolvendo!";
+	const void *buffer2; // or a stack buffer 
+	memcpy(buffer2, (const char*)resp, strlen(resp)+1 );
+	size_t len2 = strlen(resp)+1;
+
+	printk("devolvendo!");
+
     struct bt_conn *conn = ble_get_connection_ref();
     if(conn) {
        return ( bt_gatt_notify(conn,
                             &ble_uart_attr_table[BLE_UART_SERVICE_TX_CHAR_OFFSET],
-                            buffer,
-                            len));
+                            buffer2,
+                            len2));
     } else {
         return -1;
     }
