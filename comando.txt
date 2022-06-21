@@ -1,1 +1,4 @@
 include @C:/Users/Alvaro/Documents/Embarcados/uart-ble-project/nrf52840-ble-zephyr.resc
+
+## BASE
+include @scripts/multi-node/nrf52840-ble-zephyr.resc

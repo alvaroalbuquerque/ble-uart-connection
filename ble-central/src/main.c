@@ -117,7 +117,9 @@ static void connected(struct bt_conn *conn, uint8_t err)
         printk("Typed line: %s\n", s);
 		//uint8_t * buffer; // or a stack buffer 
 		//memcpy(buffer, (const char*)s, strlen(s)+1 ); // no sizeof, since sizeof(char)=1
-		if(ble_service_transmit(s, strlen(s)+1, conn) != 0) {
+		int err = ble_service_transmit(s, strlen(s)+1, conn);
+		printk("%d", err);
+		if(err != 0) {
 			break;
 		}
         //printk("Last char was: 0x%x\n", s[strlen(s)-1]);

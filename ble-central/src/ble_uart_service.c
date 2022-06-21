@@ -37,6 +37,7 @@ static ssize_t write_function (struct bt_conn *conn,
 static void on_sent(struct bt_conn *conn, uint8_t err,
 		    struct bt_gatt_write_params *params)
 {
+	printk("sent!!!!!");
 	struct bt_nus_client *nus_c;
 	const void *data;
 	uint16_t length;
@@ -94,16 +95,21 @@ int ble_service_transmit(const uint8_t *buffer, size_t len, struct bt_conn *conn
 	// create the params
 	struct bt_gatt_write_params w_params = {
 		.func = on_sent,
-		.handle = &ble_uart_attr_table[BLE_UART_SERVICE_TX_CHAR_OFFSET],
+		.handle = 1234,
 		.offset = 0,
-		.data = &buffer,
+		.data = buffer,
 		.length = len
 	};
 
-	int err;
+	printk("buffer = %p\n",(void*) w_params.data);
 
     if(conn) {
 		printk("bt_gatt_writebt_gatt_writebt_gatt_writebt_gatt_writebt_gatt_write...");
+       return (bt_gatt_write_without_response(conn,
+	   											1234,
+												buffer,
+												len,
+												false));
        return (bt_gatt_write(conn, &w_params));
     } else {
         return -1;
