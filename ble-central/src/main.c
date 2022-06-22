@@ -28,6 +28,7 @@
 static void start_scan(void);
 
 static struct bt_conn *default_conn;
+static bool is_connected = false;
 
 static void device_found(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
 			 struct net_buf_simple *ad)
@@ -94,37 +95,15 @@ static void connected(struct bt_conn *conn, uint8_t err)
 		start_scan();
 		return;
 	}
-
+	/*
 	if (conn != default_conn) {
 		return;
-	}
+	}*/
 	// CONECTA COM O SERVIÇO
 	printk("Connected: %s\n", addr);
-
-	// ESPERA A ENTRADA DO USER
-	console_getline_init();
-	printk("Enter al line finishing with Enter:\n");
-	 while(1){
-        printk(">");
-        char *s = console_getline();
-
-		// se user entrar com 'quit', desconecta o bluetooth
-		if (!strcmp(s, "quit"))
-        {
-            break;
-        }
-
-        printk("Typed line: %s\n", s);
-		//uint8_t * buffer; // or a stack buffer 
-		//memcpy(buffer, (const char*)s, strlen(s)+1 ); // no sizeof, since sizeof(char)=1
-		int err = ble_service_transmit(s, strlen(s)+1, conn);
-		printk("%d", err);
-		if(err != 0) {
-			break;
-		}
-        //printk("Last char was: 0x%x\n", s[strlen(s)-1]);
-    }
-	bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
+	default_conn = bt_conn_ref(conn);
+	is_connected = true;
+	//bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
 }
 
 static void disconnected(struct bt_conn *conn, uint8_t reason)
@@ -138,6 +117,8 @@ static void disconnected(struct bt_conn *conn, uint8_t reason)
 	bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
 
 	printk("Disconnected: %s (reason 0x%02x)\n", addr, reason);
+
+	is_connected = false;
 
 	bt_conn_unref(default_conn);
 	default_conn = NULL;
@@ -162,8 +143,52 @@ void main(void)
 
 	printk("Bluetooth initialized\n");
 
+
 	// registra os serviços de leitura e escrita
-	ble_uart_service_register();
+	//ble_uart_service_register();
 
 	start_scan();
+	printk("antes do while\n");
+	while (1)
+	{
+	printk("depois do while\n");
+	
+		if (is_connected)
+		{
+			printk("depois do if\n");
+			// ESPERA A ENTRADA DO USER
+			console_getline_init();
+			printk("Enter al line finishing with Enter:\n");
+			char *s = "ola mundo!";
+			int err = ble_service_transmit(s, strlen(s)+1, default_conn);
+			printk("%d", err);
+			if(err != 0) {
+				break;
+			}
+				/*
+			while(1){
+				printk(">");
+				char *s = console_getline();
+
+				// se user entrar com 'quit', desconecta o bluetooth
+				if (!strcmp(s, "quit"))
+				{
+					break;
+				}
+
+				printk("Typed line: %s\n", s);
+				//uint8_t * buffer; // or a stack buffer 
+				//memcpy(buffer, (const char*)s, strlen(s)+1 ); // no sizeof, since sizeof(char)=1
+				s = "ola mundo!";
+				int err = ble_service_transmit(s, strlen(s)+1, default_conn);
+				printk("%d", err);
+				if(err != 0) {
+					break;
+				}
+				//printk("Last char was: 0x%x\n", s[strlen(s)-1]);
+			}*/
+		}
+		
+	}
+	
 }

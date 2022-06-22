@@ -105,11 +105,11 @@ int ble_service_transmit(const uint8_t *buffer, size_t len, struct bt_conn *conn
 
     if(conn) {
 		printk("bt_gatt_writebt_gatt_writebt_gatt_writebt_gatt_writebt_gatt_write...");
-       return (bt_gatt_write_without_response(conn,
+       /*return (bt_gatt_write_without_response(conn,
 	   											1234,
 												buffer,
 												len,
-												false));
+												false));*/
        return (bt_gatt_write(conn, &w_params));
     } else {
         return -1;
