@@ -37,12 +37,11 @@ static ssize_t write_function (struct bt_conn *conn,
 static void on_sent(struct bt_conn *conn, uint8_t err,
 		    struct bt_gatt_write_params *params)
 {
-	printk("sent!!!!!");
 	struct bt_nus_client *nus_c;
 	const void *data;
 	uint16_t length;
 
-	printk("sent!!!!!");
+	printk("send callback function called!\n");
 }
 
 static ssize_t read_function (struct bt_conn *conn,
@@ -84,27 +83,25 @@ int ble_uart_service_register(/*const ble_uart_service_tx_callback callback*/) {
 // funcao chamada quando quiser escrever na conexao
 int ble_service_transmit(const uint8_t *buffer, size_t len, struct bt_conn *conn) {
 
-	printk("len = %zu\n",len);
-	printk("buffer = %p\n",(void*) buffer);
+
+	printk("\t\t\t\tlen = %zu\n",len);
+	printk("\t\t\t\tbuffer = %p\n",(void*) buffer);
 	if(!buffer || !len) {
 		return -1;
 	}
 
-	printk("transmiting i guess...");
+	printk("\t\t\t\ttransmiting...\n");
 
 	// create the params
 	struct bt_gatt_write_params w_params = {
 		.func = on_sent,
-		.handle = 1234,
+		.handle = 1U,
 		.offset = 0,
 		.data = buffer,
 		.length = len
 	};
 
-	printk("buffer = %p\n",(void*) w_params.data);
-
     if(conn) {
-		printk("bt_gatt_writebt_gatt_writebt_gatt_writebt_gatt_writebt_gatt_write...");
        /*return (bt_gatt_write_without_response(conn,
 	   											1234,
 												buffer,

@@ -17,6 +17,8 @@
 #include <bluetooth/conn.h>
 #include <bluetooth/uuid.h>
 #include <bluetooth/gatt.h>
+#include <bluetooth/att.h>
+#include <bluetooth/uuid.h>
 #include <sys/byteorder.h>
 
 #include <console/console.h>
@@ -29,6 +31,89 @@ static void start_scan(void);
 
 static struct bt_conn *default_conn;
 static bool is_connected = false;
+
+/*
+// PERIPHERAL UUIDs
+static struct bt_uuid_16 ble_uart_svc_uuid = BT_UUID_INIT_128(0x89, 0x67, 0x43, 0x21);
+
+static struct bt_uuid_16 ble_uart_rx_uuid = BT_UUID_INIT_128(
+	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+	0xFF, 0xFF, 0xFF, 0x01, 0x89, 0x67, 0x43, 0x21);
+
+static struct bt_uuid_16 ble_uart_tx_uuid = BT_UUID_INIT_128(
+	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+	0xFF, 0xFF, 0xFF, 0x02, 0x89, 0x67, 0x43, 0x21);
+
+
+static uint8_t notify_func(struct bt_conn *conn,
+			   struct bt_gatt_subscribe_params *params,
+			   const void *data, uint16_t length)
+{
+	if (!data) {
+		printk("[UNSUBSCRIBED]\n");
+		params->value_handle = 0U;
+		return BT_GATT_ITER_STOP;
+	}
+
+	printk("[NOTIFICATION] data %p length %u\n", data, length);
+
+	return BT_GATT_ITER_CONTINUE;
+}
+
+static uint8_t discover_func(struct bt_conn *conn,
+			     const struct bt_gatt_attr *attr,
+			     struct bt_gatt_discover_params *params)
+{
+	int err;
+
+	if (!attr) {
+		printk("Discover complete\n");
+		(void)memset(params, 0, sizeof(*params));
+		return BT_GATT_ITER_STOP;
+	}
+
+	printk("[ATTRIBUTE] handle %u\n", attr->handle);
+
+	if (!bt_uuid_cmp(discover_params.uuid, BT_UUID_HRS)) {
+		memcpy(&uuid, BT_UUID_HRS_MEASUREMENT, sizeof(uuid));
+		discover_params.uuid = &uuid.uuid;
+		discover_params.start_handle = attr->handle + 1;
+		discover_params.type = BT_GATT_DISCOVER_CHARACTERISTIC;
+
+		err = bt_gatt_discover(conn, &discover_params);
+		if (err) {
+			printk("Discover failed (err %d)\n", err);
+		}
+	} else if (!bt_uuid_cmp(discover_params.uuid,
+				BT_UUID_HRS_MEASUREMENT)) {
+		memcpy(&uuid, BT_UUID_GATT_CCC, sizeof(uuid));
+		discover_params.uuid = &uuid.uuid;
+		discover_params.start_handle = attr->handle + 2;
+		discover_params.type = BT_GATT_DISCOVER_DESCRIPTOR;
+		subscribe_params.value_handle = bt_gatt_attr_value_handle(attr);
+
+		err = bt_gatt_discover(conn, &discover_params);
+		if (err) {
+			printk("Discover failed (err %d)\n", err);
+		}
+	} else {
+		subscribe_params.notify = notify_func;
+		subscribe_params.value = BT_GATT_CCC_NOTIFY;
+		subscribe_params.ccc_handle = attr->handle;
+
+		err = bt_gatt_subscribe(conn, &subscribe_params);
+		if (err && err != -EALREADY) {
+			printk("Subscribe failed (err %d)\n", err);
+		} else {
+			printk("[SUBSCRIBED]\n");
+		}
+
+		return BT_GATT_ITER_STOP;
+	}
+
+	return BT_GATT_ITER_STOP;
+}*/
+
 
 static void device_found(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
 			 struct net_buf_simple *ad)
@@ -103,6 +188,22 @@ static void connected(struct bt_conn *conn, uint8_t err)
 	printk("Connected: %s\n", addr);
 	default_conn = bt_conn_ref(conn);
 	is_connected = true;
+	/*
+
+	if (conn == default_conn) {
+		memcpy(&uuid, &ble_uart_svc_uuid, sizeof(uuid));
+		discover_params.uuid = &uuid.uuid;
+		discover_params.func = discover_func;
+		discover_params.start_handle = BT_ATT_FIRST_ATTTRIBUTE_HANDLE;
+		discover_params.end_handle = BT_ATT_LAST_ATTTRIBUTE_HANDLE;
+		discover_params.type = BT_GATT_DISCOVER_PRIMARY;
+
+		err = bt_gatt_discover(default_conn, &discover_params);
+		if (err) {
+			printk("Discover failed(err %d)\n", err);
+			return;
+		}
+	}*/
 	//bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
 }
 
@@ -118,10 +219,10 @@ static void disconnected(struct bt_conn *conn, uint8_t reason)
 
 	printk("Disconnected: %s (reason 0x%02x)\n", addr, reason);
 
-	is_connected = false;
 
 	bt_conn_unref(default_conn);
 	default_conn = NULL;
+	is_connected = false;
 
 	start_scan();
 }
@@ -148,45 +249,42 @@ void main(void)
 	//ble_uart_service_register();
 
 	start_scan();
-	printk("antes do while\n");
+	
 	while (1)
 	{
-	printk("depois do while\n");
-	
+		printk("durante while!\tis_connected=%d\n", is_connected);
 		if (is_connected)
 		{
-			printk("depois do if\n");
 			// ESPERA A ENTRADA DO USER
 			console_getline_init();
 			printk("Enter al line finishing with Enter:\n");
+			
 			char *s = "ola mundo!";
+			printk("Sending string >\t'%s'\n", s);
 			int err = ble_service_transmit(s, strlen(s)+1, default_conn);
-			printk("%d", err);
+			printk("\t\t\t\tresult=%d\n", err);
 			if(err != 0) {
 				break;
 			}
-				/*
-			while(1){
-				printk(">");
-				char *s = console_getline();
+				
+			/*
+			printk(">");
+			char *s = console_getline();
 
-				// se user entrar com 'quit', desconecta o bluetooth
-				if (!strcmp(s, "quit"))
-				{
-					break;
-				}
+			// se user entrar com 'quit', desconecta o bluetooth
+			if (!strcmp(s, "quit"))
+			{
+				break;
+			}
 
-				printk("Typed line: %s\n", s);
-				//uint8_t * buffer; // or a stack buffer 
-				//memcpy(buffer, (const char*)s, strlen(s)+1 ); // no sizeof, since sizeof(char)=1
-				s = "ola mundo!";
-				int err = ble_service_transmit(s, strlen(s)+1, default_conn);
-				printk("%d", err);
-				if(err != 0) {
-					break;
-				}
-				//printk("Last char was: 0x%x\n", s[strlen(s)-1]);
+			printk("Typed line: %s\n", s);
+			
+			int err = ble_service_transmit(s, strlen(s)+1, default_conn);
+			printk("result=%d\n", err);
+			if(err != 0) {
+				break;
 			}*/
+			
 		}
 		
 	}
